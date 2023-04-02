@@ -62,10 +62,13 @@ class Nonogram:
     def intersection(self, other: "Nonogram") -> bool:
         return bool(
             np.all(
-                ((self.grid == "#") & (other.grid == "#"))
-                | ((self.grid == "x") & (other.grid == "x"))
-                | (self.grid == "0")
-                | (other.grid == "0")
+                ((self.grid == STATES["filled"]) & (other.grid == STATES["filled"]))
+                | (
+                    (self.grid == STATES["unfilled"])
+                    & (other.grid == STATES["unfilled"])
+                )
+                | (self.grid == STATES["unknown"])
+                | (other.grid == STATES["unknown"])
             )
         )
 
@@ -128,7 +131,10 @@ class NonogramPuzzle:
         if (
             len(clue) == 0
             and len(sequence_split) == 1
-            and all(item == "0" or item == "x" for item in sequence_split)
+            and all(
+                item == STATES["unknown"] or item == STATES["unfilled"]
+                for item in sequence_split
+            )
         ):
             return True
         if not sequence_split[0]:
@@ -207,15 +213,15 @@ class NonogramPuzzle:
 
 def get_permutations(clue: List[int], line_length: int) -> List[np.ndarray]:
     if not clue:
-        return [np.array(["x" for _ in range(line_length)])]
+        return [np.array([STATES["unfilled"] for _ in range(line_length)])]
     permutations: List[np.ndarray] = []
     for start_index in range(line_length - sum(clue) - len(clue) + 2):
         permutation = np.zeros((line_length,), dtype=">U1")
-        permutation[0:start_index] = "x"
-        permutation[start_index : start_index + clue[0]] = "#"
+        permutation[0:start_index] = STATES["unfilled"]
+        permutation[start_index : start_index + clue[0]] = STATES["filled"]
         cursor = start_index + clue[0]
         if cursor < line_length:
-            permutation[cursor] = "x"
+            permutation[cursor] = STATES["unfilled"]
             cursor += 1
         sub_permutations = get_permutations(clue[1:], line_length - cursor)
         for sub_permutation in sub_permutations:
