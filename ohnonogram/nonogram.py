@@ -4,7 +4,7 @@ Defines fundamental classes for nonogram representation.
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
