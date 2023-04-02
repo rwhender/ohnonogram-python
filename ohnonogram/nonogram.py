@@ -25,8 +25,16 @@ class Nonogram:
 
     grid: npt.NDArray
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> "Nonogram":
         return type(self)(self.grid[key])
+
+    def __setitem__(self, key, value):
+        if isinstance(value, Nonogram):
+            self.grid[key] = value.grid[key]
+        elif isinstance(value, np.ndarray):
+            self.grid[key] = value
+        else:
+            raise TypeError("Unsupported type.")
 
     def __str__(self) -> str:
         return "\n".join(

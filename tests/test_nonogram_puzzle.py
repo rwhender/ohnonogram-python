@@ -4,7 +4,6 @@ Tests for NonogramPuzzle.
 from pathlib import Path
 from typing import List
 
-import numpy as np
 import pytest
 from pytest_unordered import unordered
 
