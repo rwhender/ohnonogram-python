@@ -4,7 +4,6 @@ Tests for NonogramPuzzle.
 from pathlib import Path
 from typing import List
 
-import numpy as np
 import pytest
 from pytest_unordered import unordered
 
@@ -66,7 +65,7 @@ expected_solution = """#######0###000#0#0#######
 def test_nonogram_puzzle_load():
     example_file = (
         Path(__file__).parents[1] / "example_puzzles"
-    ) / "example_1_25x25.txt"
+    ) / "example_1_25x25 with initial state.txt"
     puzzle = NonogramPuzzle.load_from_text_file(example_file)
     assert str(puzzle.current_state) == expected_str
 
@@ -74,7 +73,7 @@ def test_nonogram_puzzle_load():
 def test_nonogram_puzzle_eval():
     example_file = (
         Path(__file__).parents[1] / "example_puzzles"
-    ) / "example_1_25x25.txt"
+    ) / "example_1_25x25 with initial state.txt"
     puzzle = NonogramPuzzle.load_from_text_file(example_file)
     puzzle.current_state = Nonogram.load_grid_from_text(
         [list(row) for row in expected_solution.split("\n")]
