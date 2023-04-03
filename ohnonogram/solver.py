@@ -49,6 +49,14 @@ class PermutationDepthFirstSolver(NonogramSolver):
 
         Notes
         -----
+        It turns out this solution method is extremely slow for large puzzles, because
+        checking the satisfiability of a column requires a number of operations
+        proportional to the number of permutations that exist for that column. It's
+        probably much faster just to fill the whole puzzle in, then check its
+        correctness, in order to check the correctness of a branch of the DFS tree.
+
+        Original note:
+
         First, we find all sequence permutations for all clues. In a smarter (later)
         implementation, maybe later change this so permutations are produced lazily and
         memoized using a generator. Next, use depth-first search to fill in puzzle from
@@ -60,10 +68,38 @@ class PermutationDepthFirstSolver(NonogramSolver):
         permutation_index_map: Dict[int, int] = {
             i: 0 for i in range(self.puzzle.row_count)
         }
-        while not self.puzzle.evaluate_all_clues():
+        permutation_list_length: Dict[int, int] = {
+            i: len(self.puzzle.row_clue_permutations[i])
+            for i in range(self.puzzle.row_count)
+        }
+        while row_cursor < self.puzzle.row_count:
+            print("Row cursor:", row_cursor)
+            print("Permutation index:", permutation_index_map[row_cursor])
+            self.attempted_states.append(self.puzzle.current_state)
+            assert row_cursor >= 0, "Negative row cursor found. Undefined state."
             current_row_permutation = self.puzzle.row_clue_permutations[row_cursor][
                 permutation_index_map[row_cursor]
             ]
-            self.puzzle.current_state[0, :] = current_row_permutation
-            # evaluate all column clues
+            self.puzzle.current_state[row_cursor, :] = current_row_permutation
+            all_columns_good = True
+            for column_index in range(self.puzzle.column_count):
+                print("column index:", column_index)
+                if not self.puzzle.clue_is_satisfiable("column", column_index):
+                    all_columns_good = False
+                    break
+            if not all_columns_good:
+                keep_backtracking = True
+                while keep_backtracking:
+                    if (
+                        permutation_index_map[row_cursor]
+                        >= permutation_list_length[row_cursor] - 1
+                    ):
+                        row_cursor -= 1
+                    else:
+                        permutation_index_map[row_cursor] += 1
+                        keep_backtracking = False
+            else:
+                row_cursor += 1
+        if not self.puzzle.evaluate_all_clues():
+            raise RuntimeError("Solution loop ended, but puzzle is not solved.")
         return self.puzzle.current_state

@@ -30,7 +30,7 @@ class Nonogram:
 
     def __setitem__(self, key, value):
         if isinstance(value, Nonogram):
-            self.grid[key] = value.grid[key]
+            self.grid[key] = value.grid
         elif isinstance(value, np.ndarray):
             self.grid[key] = value
         else:
@@ -237,10 +237,3 @@ def get_permutations(clue: List[int], line_length: int) -> List[np.ndarray]:
             new_permutation[cursor:] = sub_permutation
             permutations.append(new_permutation)
     return permutations
-
-
-if __name__ == "__main__":
-    example_file = (
-        Path(__file__).parents[1] / "example_puzzles"
-    ) / "example_1_25x25.txt"
-    puzzle = NonogramPuzzle.load_from_text_file(example_file)
