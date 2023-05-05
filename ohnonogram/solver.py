@@ -3,7 +3,6 @@ Defines solver interface and solver implementations.
 """
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Dict, List
 
 from ohnonogram.nonogram import Nonogram, NonogramPuzzle
 
@@ -17,7 +16,7 @@ class NonogramSolver(ABC):
     """
     Puzzle to be solved.
     """
-    attempted_states: List[Nonogram] = []
+    attempted_states: list[Nonogram] = []
     """
     A list of puzzle states attempted during solving for later analysis.
     """
@@ -53,8 +52,8 @@ class SimpleDepthFirstSearchSolver(NonogramSolver):
             If the solution loop ends an no solution has been found.
         """
         row_cursor = 0
-        permutation_index_list: List[int] = [0 for i in range(self.puzzle.row_count)]
-        permutation_list_lengths: List[int] = [
+        permutation_index_list: list[int] = [0 for i in range(self.puzzle.row_count)]
+        permutation_list_lengths: list[int] = [
             len(self.puzzle.row_clue_permutations[i])
             for i in range(self.puzzle.row_count)
         ]
@@ -107,8 +106,8 @@ class PermutationDepthFirstSolver(NonogramSolver):
 
         Notes
         -----
-        It turns out this solution method is extremely slow for large puzzles, because
-        checking the satisfiability of a column requires a number of operations
+        It turns out this solution method is extremely slow for certain large puzzles,
+        because checking the satisfiability of a column requires a number of operations
         proportional to the number of permutations that exist for that column. It's
         probably much faster just to fill the whole puzzle in, then check its
         correctness, in order to check the correctness of a branch of the DFS tree.
@@ -123,10 +122,10 @@ class PermutationDepthFirstSolver(NonogramSolver):
         another permutation, and continue. Repeat until solved.
         """
         row_cursor = 0
-        permutation_index_map: Dict[int, int] = {
+        permutation_index_map: dict[int, int] = {
             i: 0 for i in range(self.puzzle.row_count)
         }
-        permutation_list_length: Dict[int, int] = {
+        permutation_list_length: dict[int, int] = {
             i: len(self.puzzle.row_clue_permutations[i])
             for i in range(self.puzzle.row_count)
         }
@@ -161,3 +160,18 @@ class PermutationDepthFirstSolver(NonogramSolver):
         if not self.puzzle.evaluate_all_clues():
             raise RuntimeError("Solution loop ended, but puzzle is not solved.")
         return self.puzzle.current_state
+
+
+class SolverMarkIII(Nonogram):
+    """
+    The idea with this solver is fix in place as many filled squares as possible using
+    the enumerated permutations.
+    """
+
+    truth_so_far: Nonogram
+    """
+    Any filled or unfilled squares in this attribute are definitely correct (probably).
+    """
+
+    def solve(self) -> Nonogram:
+        return self.truth_so_far

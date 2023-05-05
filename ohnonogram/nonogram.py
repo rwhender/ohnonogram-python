@@ -4,7 +4,8 @@ Defines fundamental classes for nonogram representation.
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Sequence
+from collections import deque
 
 import numpy as np
 import numpy.typing as npt
@@ -45,18 +46,18 @@ class Nonogram:
         )
 
     @property
-    def row_count(self) -> Optional[int]:
+    def row_count(self) -> int | None:
         return self.grid.shape[0] if len(self.grid.shape) >= 1 else None
 
     @property
-    def column_count(self) -> Optional[int]:
+    def column_count(self) -> int | None:
         return self.grid.shape[1] if len(self.grid.shape) >= 2 else None
 
     @classmethod
-    def load_grid_from_text(cls, grid_text: List[List[str]]) -> "Nonogram":
-        grid: List[List[str]] = []
+    def load_grid_from_text(cls, grid_text: list[list[str]]) -> "Nonogram":
+        grid: list[list[str]] = []
         for row in grid_text:
-            column_list: List[str] = []
+            column_list: list[str] = []
             for column in row:
                 assert len(column) == 1, f"Actual column value: {column}"
                 column_list.append(column)
@@ -89,11 +90,11 @@ class NonogramPuzzle:
 
     row_count: int
     column_count: int
-    row_clues: List[List[int]]
-    column_clues: List[List[int]]
+    row_clues: list[list[int]]
+    column_clues: list[list[int]]
     current_state: Nonogram
-    row_clue_permutations: List[List[Nonogram]] = field(default_factory=list)
-    column_clue_permutations: List[List[Nonogram]] = field(default_factory=list)
+    row_clue_permutations: list[list[Nonogram]] = field(default_factory=list)
+    column_clue_permutations: list[list[Nonogram]] = field(default_factory=list)
 
     def __post_init__(self):
         self.row_clue_permutations = [
@@ -105,13 +106,13 @@ class NonogramPuzzle:
         ]
 
     @classmethod
-    def load_from_text_file(cls, text_file: Union[str, Path]) -> "NonogramPuzzle":
+    def load_from_text_file(cls, text_file: str | Path) -> "NonogramPuzzle":
         with open(str(text_file), "rt") as f:
             row_count = 0
             column_count = 0
-            row_clues: List[List[int]] = []
-            column_clues: List[List[int]] = []
-            grid_text: List[List[str]] = []
+            row_clues: list[list[int]] = []
+            column_clues: list[list[int]] = []
+            grid_text: list[list[str]] = []
             for line_index, line in enumerate(f):
                 if line_index == 0:
                     row_count, column_count = [int(item) for item in line.split()]
@@ -171,7 +172,7 @@ class NonogramPuzzle:
         self,
         row_or_col: str,
         index: int,
-    ) -> Tuple[np.ndarray, List[int]]:
+    ) -> tuple[np.ndarray, list[int]]:
         if row_or_col.lower() == "row":
             sequence = self.current_state.grid[index]
             clue = self.row_clues[index]
@@ -186,7 +187,7 @@ class NonogramPuzzle:
             raise ValueError("row_or_col argument must be either 'row' or 'column'.")
         return sequence, clue
 
-    def get_all_permutations(self, row_or_col: str, index: int) -> List[Nonogram]:
+    def get_all_permutations(self, row_or_col: str, index: int) -> list[Nonogram]:
         """
         Generate all possible permutations for the clue given by the arguments.
 
@@ -200,7 +201,7 @@ class NonogramPuzzle:
 
         Returns
         -------
-        List[Nonogram]
+        list[Nonogram]
             The list of all sequence permutations for the given clue.
         """
         sequence, clue = self.get_sequence_and_clue(row_or_col, index)
@@ -218,11 +219,76 @@ class NonogramPuzzle:
                 return True
         return False
 
+    def trim_permutations(self, puzzle_state: Nonogram | None = None) -> int:
+        """
+        Remove invalid permutations from the puzzle object.
 
-def get_permutations(clue: List[int], line_length: int) -> List[np.ndarray]:
+        If no `puzzle_state` is provided, the internal `current_state` attribute is used
+        to determine which permutations to trim.
+
+        Parameters
+        ----------
+        puzzle_state : Nonogram | None, optional
+            The puzzle state to compare the permutations against to decide whether to
+            remove them. If None, use the puzzle object's `current_state` attribute, by
+            default None.
+
+        Returns
+        -------
+        int
+            Number of permutations removed.
+        """
+        number_of_permutations_removed = 0
+        row_permutations_to_keep: list[deque[Nonogram]] = [
+            deque() for _ in range(self.row_count)
+        ]
+        column_permutations_to_keep: list[deque[Nonogram]] = [
+            deque() for _ in range(self.column_count)
+        ]
+        if puzzle_state is None:
+            puzzle_state = self.current_state
+        for row_index, row_permutation_list in enumerate(self.row_clue_permutations):
+            row = puzzle_state[row_index, :]
+            for row_permutation in row_permutation_list:
+                if row.intersection(row_permutation):
+                    row_permutations_to_keep[row_index].append(row_permutation)
+                else:
+                    number_of_permutations_removed += 1
+        for column_index, column_permutation_list in enumerate(
+            self.column_clue_permutations
+        ):
+            column = puzzle_state[column_index, :]
+            for column_permutation in column_permutation_list:
+                if column.intersection(column_permutation):
+                    column_permutations_to_keep[column_index].append(column_permutation)
+                else:
+                    number_of_permutations_removed += 1
+        self.row_clue_permutations = [list(deq) for deq in row_permutations_to_keep]
+        self.column_clue_permutations = [
+            list(deq) for deq in column_permutations_to_keep
+        ]
+        return number_of_permutations_removed
+
+
+def get_permutations(clue: list[int], line_length: int) -> list[np.ndarray]:
+    """
+    Find all permutations of the given clue and line length.
+
+    Parameters
+    ----------
+    clue : list[int]
+        Clue to generate permutations for.
+    line_length : int
+        Length of the line for which permutations are being generated.
+
+    Returns
+    -------
+    list[np.ndarray]
+        The list of valid permutations for the given clue and line length.
+    """
     if not clue:
         return [np.array([STATES["unfilled"] for _ in range(line_length)])]
-    permutations: List[np.ndarray] = []
+    permutations: deque[np.ndarray] = deque()
     for start_index in range(line_length - sum(clue) - len(clue) + 2):
         permutation = np.zeros((line_length,), dtype=">U1")
         permutation[0:start_index] = STATES["unfilled"]
@@ -236,4 +302,4 @@ def get_permutations(clue: List[int], line_length: int) -> List[np.ndarray]:
             new_permutation = np.copy(permutation)
             new_permutation[cursor:] = sub_permutation
             permutations.append(new_permutation)
-    return permutations
+    return list(permutations)
