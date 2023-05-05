@@ -33,6 +33,64 @@ class NonogramSolver(ABC):
         ...
 
 
+class SimpleDepthFirstSearchSolver(NonogramSolver):
+    """
+    Defines a simple depth-first search nonogram solver.
+    """
+
+    def solve(self) -> Nonogram:
+        """
+        Solve the puzzle using a brute-force depth-first search strategy.
+
+        Returns
+        -------
+        Nonogram
+            An object representing the solved puzzle state.
+
+        Raises
+        ------
+        RuntimeError
+            If the solution loop ends an no solution has been found.
+        """
+        row_cursor = 0
+        permutation_index_list: List[int] = [0 for i in range(self.puzzle.row_count)]
+        permutation_list_lengths: List[int] = [
+            len(self.puzzle.row_clue_permutations[i])
+            for i in range(self.puzzle.row_count)
+        ]
+        while row_cursor < self.puzzle.row_count:
+            print("Row cursor:", row_cursor)
+            print("Permutation index:", permutation_index_list[row_cursor])
+            self.attempted_states.append(self.puzzle.current_state)
+            assert row_cursor >= 0, "Negative row cursor found. Undefined state."
+
+            self.puzzle.current_state[
+                row_cursor, :
+            ] = self.puzzle.row_clue_permutations[row_cursor][
+                permutation_index_list[row_cursor]
+            ]
+            if row_cursor >= self.puzzle.row_count - 1:
+                if not self.puzzle.evaluate_all_clues():
+                    keep_backtracking = True
+                    while keep_backtracking:
+                        if (
+                            permutation_index_list[row_cursor]
+                            >= permutation_list_lengths[row_cursor] - 1
+                        ):
+                            permutation_index_list[row_cursor] = 0
+                            row_cursor -= 1
+                        else:
+                            permutation_index_list[row_cursor] += 1
+                            keep_backtracking = False
+                else:
+                    print("solved!")
+            else:
+                row_cursor += 1
+        if not self.puzzle.evaluate_all_clues():
+            raise RuntimeError("Solution loop ended, but puzzle is not solved.")
+        return self.puzzle.current_state
+
+
 class PermutationDepthFirstSolver(NonogramSolver):
     """
     Defines a permutation-based depth-first search nonogram solver.
