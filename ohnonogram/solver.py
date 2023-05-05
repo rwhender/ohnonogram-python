@@ -165,7 +165,7 @@ class PermutationDepthFirstSolver(NonogramSolver):
 class SolverMarkIII(Nonogram):
     """
     The idea with this solver is fix in place as many filled squares as possible using
-    the enumerated permutations.
+    the enumerated permutations, then invoke another solver.
     """
 
     truth_so_far: Nonogram
