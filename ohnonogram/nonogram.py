@@ -68,6 +68,25 @@ class Nonogram:
     def from_sequence(cls, sequence: Sequence) -> "Nonogram":
         return cls(np.array(sequence))
 
+    @classmethod
+    def empty(cls, row_count: int, column_count: int) -> "Nonogram":
+        """
+        Create an empty (all cells unknown) Nonogram object with given size.
+
+        Parameters
+        ----------
+        row_count : int
+            Number of rows in the empty Nonogram.
+        column_count : int
+            Number of columns in the empty Nonogram.
+
+        Returns
+        -------
+        Nonogram
+            Nonogram with all unknown cells.
+        """
+        return cls(np.array([[STATES["unknown"]] * column_count] * row_count))
+
     def intersection(self, other: "Nonogram") -> bool:
         return bool(
             np.all(
