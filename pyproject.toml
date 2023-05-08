@@ -24,3 +24,6 @@ isort = "5.12.0"
 [tool.poetry.group.test.dependencies]
 pytest = "*"
 pytest-unordered = "*"
+
+[tool.isort]
+profile = "black"

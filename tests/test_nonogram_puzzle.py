@@ -130,3 +130,9 @@ def test_get_permutations(clue: List[int], line_length: int, expected: List[List
     result = get_permutations(clue, line_length)
     result_list = [item.tolist() for item in result]
     assert result_list == unordered(expected)
+
+
+def test_nonogram_empty():
+    empty_8_5 = Nonogram.empty(8, 5)
+    assert empty_8_5.row_count == 8
+    assert empty_8_5.column_count == 5
