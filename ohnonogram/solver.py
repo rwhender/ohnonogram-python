@@ -162,7 +162,7 @@ class PermutationDepthFirstSolver(NonogramSolver):
         return self.puzzle.current_state
 
 
-class SolverMarkIII(Nonogram):
+class SolverMarkIII(NonogramSolver):
     """
     The idea with this solver is fix in place as many filled squares as possible using
     the enumerated permutations, then invoke another solver.
@@ -172,6 +172,19 @@ class SolverMarkIII(Nonogram):
     """
     Any filled or unfilled squares in this attribute are definitely correct (probably).
     """
+
+    def partially_solve_sequence(self, index: int, row_or_column: str):
+        """
+        Solve a row or column to the extent possible using only that sequence's clue.
+
+        Parameters
+        ----------
+        index : int
+            _description_
+        row_or_column : str
+            _description_
+        """
+        ...
 
     def solve(self) -> Nonogram:
         return self.truth_so_far

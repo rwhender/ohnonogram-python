@@ -2,10 +2,10 @@
 Defines fundamental classes for nonogram representation.
 """
 import re
+from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Sequence
-from collections import deque
 
 import numpy as np
 import numpy.typing as npt
@@ -227,6 +227,9 @@ class NonogramPuzzle:
         return [Nonogram(array) for array in get_permutations(clue, len(sequence))]
 
     def clue_is_satisfiable(self, row_or_col: str, index: int) -> bool:
+        """
+        Verify clue is satisfiable.
+        """
         sequence, _ = self.get_sequence_and_clue(row_or_col, index)
         permutations = (
             self.row_clue_permutations[index]
